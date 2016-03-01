@@ -25,7 +25,7 @@ class ViewController: UIViewController {
 		view1.addSubview(view2)
 
 		let cRect = CGRect(x: 10, y: 40, width: view2.bounds.width - 30, height: 100)
-		let cv = ChooseImageView(frame: cRect, fixed: true, scroll: true)
+		let cv = ChooseImageView(frame: cRect, fixed: false, scroll: true)
 		view2.addSubview(cv)
 	}
 

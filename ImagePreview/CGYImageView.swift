@@ -19,11 +19,11 @@ protocol CGYImageViewDelegate: class {
 class CGYImageView: UIView {
 	private var imageView: UIImageView! // 图片
 	private var closeButton: UIButton! // 关闭按钮
-	private var index: Int!// 第几张
-	private var image: UIImage // 图片
 	private var tap: UITapGestureRecognizer!// 单点手势
 	private var imageDidSelectedBlock: imageBlock? // 回调
 	private var buttonDidSelectedBlock: buttonBlock? // 回调
+    var index: Int!// 第几张
+    var image: UIImage // 图片
 	var rectToScreen: CGRect! // 相对于屏幕的Frame
 	weak var delegate: CGYImageViewDelegate? // 代理
 

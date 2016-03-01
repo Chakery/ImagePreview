@@ -8,7 +8,7 @@
 
 import UIKit
 
-private let countOfRow: CGFloat = 5
+private let countOfRow: Int = 5
 private let margin: CGFloat = 10
 
 class ChooseImageView: UIView {
@@ -23,7 +23,8 @@ class ChooseImageView: UIView {
 	private var myWindow: UIWindow!
 	private var fixed: Bool
 	private var scroll: Bool
-
+    private var currentStatus: Bool!
+    
 	init(frame: CGRect, datasource: [UIImage] = [], fixed: Bool, scroll: Bool) {
 		self.scroll = scroll
 		self.fixed = fixed
@@ -43,8 +44,8 @@ class ChooseImageView: UIView {
 		self.addObserver(self, forKeyPath: "datasource", options: [.New, .Old], context: &myContext)
 
 		myWindow = UIApplication.sharedApplication().delegate?.window!
-
-		buttonWidth = (bounds.width - ((countOfRow + 1) * margin)) / countOfRow
+        
+		buttonWidth = (bounds.width - (CGFloat(countOfRow) + 1) * margin) / CGFloat(countOfRow)
 		buttonHeight = bounds.height - (margin * 2)
 
 		pickerViewControl = UIImagePickerController()
@@ -70,7 +71,9 @@ class ChooseImageView: UIView {
 			scrollView.contentSize = CGSize(width: width, height: 0)
 			changeAddButtonFrame(fixed)
 			cgyImageViewDrawToScrollView(datasource)
-			scrollToRight()
+            if currentStatus! {
+                scrollToRight(scroll)
+            }
 		}
 	}
 
@@ -118,18 +121,15 @@ class ChooseImageView: UIView {
 	}
 
 	/// 滚动到scrollview的最右边
-	///
-	/// - parameter scrollview: 需要滚动的scrollview
-	private func scrollToRight() {
-		if !scroll {
+    private func scrollToRight(scroll: Bool) {
+        if !scroll {
 			return
 		}
-		let x = CGFloat(datasource.count + 1) * (buttonWidth + margin)
-		let size = scrollView.contentSize
-		if size.width >= self.bounds.width {
-			let scrollToRect = CGRect(x: x, y: 0, width: scrollView.bounds.width, height: scrollView.bounds.height)
-			scrollView.scrollRectToVisible(scrollToRect, animated: false)
-		}
+        if datasource.count < countOfRow {
+            return
+        }
+		let x = CGFloat(datasource.count - countOfRow + 1) * (buttonWidth + margin)
+        scrollView.setContentOffset(CGPoint(x: x, y: 0), animated: true)
 	}
 
 	deinit {
@@ -141,9 +141,14 @@ class ChooseImageView: UIView {
 // MARK: - CGYImageViewDelegate
 extension ChooseImageView: CGYImageViewDelegate {
 	func imageViewDidSelected(imageView: CGYImageView, image: UIImage, index: Int) {
-		print(imageView.frame)
+		let rootViewConroller = UIApplication.sharedApplication().keyWindow?.rootViewController
+        let preViewController = PreviewController()
+        preViewController.datasource = cgyImages
+        preViewController.index = index
+        rootViewConroller?.presentViewController(preViewController, animated: false, completion: nil)
 	}
 	func closeButtonDidSelected(imageView: CGYImageView, index: Int) {
+        currentStatus = false
 		datasource.removeAtIndex(index)
 	}
 }
@@ -159,7 +164,8 @@ extension ChooseImageView: UIImagePickerControllerDelegate, UINavigationControll
 
 		if type == "public.image" {
 			let image = info[UIImagePickerControllerEditedImage] as! UIImage
-			datasource.append(image)
+			currentStatus = true
+            datasource.append(image)
 		}
 
 		pickerViewControl.dismissViewControllerAnimated(true, completion: nil)
