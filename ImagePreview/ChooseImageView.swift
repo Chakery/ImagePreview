@@ -8,7 +8,6 @@
 
 import UIKit
 
-private let countOfRow: Int = 5
 private let margin: CGFloat = 10
 
 class ChooseImageView: UIView {
@@ -23,12 +22,14 @@ class ChooseImageView: UIView {
 	private var myWindow: UIWindow!
 	private var fixed: Bool
 	private var scroll: Bool
-    private var currentStatus: Bool!
-    
-	init(frame: CGRect, datasource: [UIImage] = [], fixed: Bool, scroll: Bool) {
-		self.scroll = scroll
-		self.fixed = fixed
+	private var currentStatus: Bool!
+	private var countOfRow: Int!
+
+	init(frame: CGRect, datasource: [UIImage] = [], fixedAddButton: Bool, autoScroll: Bool, countOfRow: Int = 5) {
+		self.scroll = autoScroll
+		self.fixed = fixedAddButton
 		self.datasource = datasource
+		self.countOfRow = countOfRow
 		super.init(frame: frame)
 		didInit()
 	}
@@ -44,7 +45,7 @@ class ChooseImageView: UIView {
 		self.addObserver(self, forKeyPath: "datasource", options: [.New, .Old], context: &myContext)
 
 		myWindow = UIApplication.sharedApplication().delegate?.window!
-        
+
 		buttonWidth = (bounds.width - (CGFloat(countOfRow) + 1) * margin) / CGFloat(countOfRow)
 		buttonHeight = bounds.height - (margin * 2)
 
@@ -60,7 +61,7 @@ class ChooseImageView: UIView {
 
 		addButton = UIButton(frame: CGRect(x: margin, y: margin, width: buttonWidth, height: buttonHeight))
 		addButton.addTarget(self, action: "addButtonDidSelected:", forControlEvents: .TouchUpInside)
-		addButton.backgroundColor = UIColor.orangeColor()
+		addButton.setImage(UIImage(named: "ImagePreview.bundle/uploadButton"), forState: .Normal)
 		scrollView.addSubview(addButton)
 	}
 
@@ -71,9 +72,9 @@ class ChooseImageView: UIView {
 			scrollView.contentSize = CGSize(width: width, height: 0)
 			changeAddButtonFrame(fixed)
 			cgyImageViewDrawToScrollView(datasource)
-            if currentStatus! {
-                scrollToRight(scroll)
-            }
+			if currentStatus! {
+				scrollToRight(scroll)
+			}
 		}
 	}
 
@@ -121,15 +122,18 @@ class ChooseImageView: UIView {
 	}
 
 	/// 滚动到scrollview的最右边
-    private func scrollToRight(scroll: Bool) {
-        if !scroll {
+	private func scrollToRight(scroll: Bool) {
+		if !scroll {
 			return
 		}
-        if datasource.count < countOfRow {
-            return
-        }
+		if datasource.count < countOfRow {
+			return
+		}
 		let x = CGFloat(datasource.count - countOfRow + 1) * (buttonWidth + margin)
-        scrollView.setContentOffset(CGPoint(x: x, y: 0), animated: true)
+		let time = dispatch_time(DISPATCH_TIME_NOW, Int64(0.3 * Double(NSEC_PER_SEC)))
+		dispatch_after(time, dispatch_get_main_queue()) { [unowned self] _ in
+			self.scrollView.setContentOffset(CGPoint(x: x, y: 0), animated: true)
+		}
 	}
 
 	deinit {
@@ -142,13 +146,18 @@ class ChooseImageView: UIView {
 extension ChooseImageView: CGYImageViewDelegate {
 	func imageViewDidSelected(imageView: CGYImageView, image: UIImage, index: Int) {
 		let rootViewConroller = UIApplication.sharedApplication().keyWindow?.rootViewController
-        let preViewController = PreviewController()
-        preViewController.datasource = cgyImages
-        preViewController.index = index
-        rootViewConroller?.presentViewController(preViewController, animated: false, completion: nil)
+		let preViewController = PreviewController()
+		preViewController.datasource = cgyImages
+		preViewController.index = index
+		preViewController.previewControllerDismiss { () -> Void in
+			preViewController.view.removeFromSuperview()
+			preViewController.removeFromParentViewController()
+		}
+		rootViewConroller?.addChildViewController(preViewController)
+		rootViewConroller?.view.addSubview(preViewController.view)
 	}
 	func closeButtonDidSelected(imageView: CGYImageView, index: Int) {
-        currentStatus = false
+		currentStatus = false
 		datasource.removeAtIndex(index)
 	}
 }
@@ -165,7 +174,7 @@ extension ChooseImageView: UIImagePickerControllerDelegate, UINavigationControll
 		if type == "public.image" {
 			let image = info[UIImagePickerControllerEditedImage] as! UIImage
 			currentStatus = true
-            datasource.append(image)
+			datasource.append(image)
 		}
 
 		pickerViewControl.dismissViewControllerAnimated(true, completion: nil)

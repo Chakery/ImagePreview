@@ -22,8 +22,8 @@ class CGYImageView: UIView {
 	private var tap: UITapGestureRecognizer!// 单点手势
 	private var imageDidSelectedBlock: imageBlock? // 回调
 	private var buttonDidSelectedBlock: buttonBlock? // 回调
-    var index: Int!// 第几张
-    var image: UIImage // 图片
+	var index: Int!// 第几张
+	var image: UIImage // 图片
 	var rectToScreen: CGRect! // 相对于屏幕的Frame
 	weak var delegate: CGYImageViewDelegate? // 代理
 
@@ -43,7 +43,7 @@ class CGYImageView: UIView {
 		imageView.image = image
 		imageView.userInteractionEnabled = true
 		closeButton = UIButton(frame: CGRect(x: imageView.bounds.width - 20, y: 0, width: 20, height: 20))
-		closeButton.backgroundColor = UIColor.redColor()
+		closeButton.setImage(UIImage(named: "ImagePreview.bundle/cgy_close_image"), forState: .Normal)
 		closeButton.addTarget(self, action: "closeButtonDidSelected:", forControlEvents: .TouchUpInside)
 		tap = UITapGestureRecognizer(target: self, action: "imageViewDidSelected:")
 
